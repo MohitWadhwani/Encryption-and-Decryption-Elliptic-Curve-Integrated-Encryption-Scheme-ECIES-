@@ -1,0 +1,67 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ECDH;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.util.Base64;
+import java.util.Scanner;
+import javax.crypto.Cipher;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.jce.spec.IEKeySpec;
+import org.bouncycastle.jce.spec.IESParameterSpec;
+
+/**
+ *
+ * @author Mohit
+ */
+public class ECIES {
+    public static void main(String[] args) throws Exception {        
+   String plainText="Hye How are You?";     
+    System.out.println("Original plaintext message: " + plainText);
+Security.addProvider(new BouncyCastleProvider());
+// initializing parameter specs secp256r1/prime192v1
+ECNamedCurveParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
+KeyPairGenerator generator = KeyPairGenerator.getInstance("ECIES");
+// initialize key pair generator
+generator.initialize(ecSpec,new SecureRandom());
+// Key pair to store public and private key
+KeyPair akey = generator.generateKeyPair();
+KeyPair bkey = generator.generateKeyPair();
+byte[] d = new byte[0];
+byte[] e = new byte[0];
+
+IESParameterSpec param = new IESParameterSpec(d, e, 256);
+            //System.out.println(param.getMacKeySize());
+           //System.out.println(param.getEncodingV());
+//IESParameterSpec param = new IESParameterSpec(d, e, 256);
+Cipher iesCipher = Cipher.getInstance("ECIES",BouncyCastleProvider.PROVIDER_NAME);
+
+//encription
+
+iesCipher.init(Cipher.ENCRYPT_MODE,new IEKeySpec(akey.getPrivate(), bkey.getPublic()),param);
+byte[] encrypted = iesCipher.doFinal(plainText.getBytes());
+String cipher=encrypted.toString();
+Base64.Encoder encoder = Base64.getEncoder();
+      String encoded= encoder.encodeToString(cipher.getBytes());
+   System.out.println("Encrypted cipher text:"+ encoded); 
+      
+// Decrypt the message using 'secretKeyB'
+ iesCipher.init(Cipher.DECRYPT_MODE, new IEKeySpec(bkey.getPrivate(),akey.getPublic()),param);
+  
+       byte[] plaintext = iesCipher.doFinal(encrypted);
+       
+       String plain_output = new String(plaintext, "UTF8");
+           System.out.println("Decrypted text:"+plain_output); 
+         
+}
+}
